@@ -1,41 +1,54 @@
 ## Description
 
-Description of what this PR does. What have you added or changed, and why?  If it fixes a bug or resolves a feature request, be sure to link to that issue.
+Describe in as much detail as possible what the pull request is trying to achieve and any contextual information which may be helpful to reviewers.
 
 **YOUR TEXT HERE**
 
-## Review Checks
+**Useful links (e.g. tickets, architecture diagrams etc.)**
 
-Please check if the PR fulfils these requirements:
+- [Jira Ticket](https://example.com/)
 
-_Put an `x` in the boxes that apply, Remove any lines that do not apply_
+## Checklist
+
+_Put an `x` in all that apply and explain why in any that don't
+
+- [ ] ❓ I have performed a self-review
 - [ ] 📝 The commit message is clear and descriptive
-- [ ] 🔐 The Security Considerations section in the PR description is complete - **Please do not remove this**
-- [ ] ✅ Tests for the changes have been added and run successfully including the new changes
-- [ ] 📄 Documentation has been added / updated (for bug fixes / features)
+- [ ] ✅ I have added tests that prove my fix is effective or that my feature works
+- [ ] 📄 The documentation is up-to-date
+- [ ] 🔐 The security considerations section in the PR description is complete - **Please do not remove this**
 
 ## Dependencies
 
-Add links to any pull requests or documentation related to this pull request.
+**Add links to any pull requests or documentation related to this pull request.**
 
-**YOUR [LINK](http://example.com/) HERE**
+- [YOUR LINK HERE](https://example.com/)
 
 **Does this PR introduce a breaking change?** (What changes might users need to make in their application due to this PR?)
+
 - [ ] Yes
+- [ ] No
+
+**If you answered yes, then please explain below.**
 
 ## Security Considerations
 
-Are there any other security or data concerns to be aware of?
+Are there any security or data concerns to consider?
 
 Please discuss the security implications/considerations relevant to the proposed change.
-This may include...
-* security-relevant design decisions
-* concerns
-* important discussions
-* implementation-specific guidance and pitfalls
-* an outline of threats and risks and how they are being addressed.
 
-**YOUR TEXT HERE**
+**These may include:**
+
+* Security-relevant design decisions
+* Concerns
+* Important discussions
+* Implementation-specific guidance and pitfalls
+* An outline of risks and threats
+
+- [ ] Yes
+- [ ] No
+
+**If you answered yes, then please explain below.**
 
 ## Types of change
 
@@ -44,27 +57,15 @@ _Put an `x` in the boxes that apply_
 
 - [ ] 🐛 Bug fix (non-breaking change which fixes an issue)
 - [ ] ✨ New feature (non-breaking change which adds functionality)
-- [ ] 💥 Breaking change (fix or feature that would cause existing functionality to not work as expected)
+- [ ] 💥 Breaking change (fix or feature that would cause existing functionality not to work as expected)
 - [ ] 🛠 Adding or updating configuration files, development scripts etc.
 - [ ] ♻️ Refactoring (no functional changes, no API changes)
 - [ ] 🧹 Chore (removing redundant files, fixing typos etc.)
 - [ ] 📄 Documentation Update
 - [ ] ❓ Other (if none of the other choices applies)
 
-If "Other" please specify
+**If you answered "other", then please explain below.**
 
-**YOUR TEXT HERE**
+## Additional information
 
-# Testing
-
-Please include steps that the reviewer can follow to test the changes
-
-1.
-2.
-3.
-
-# Other information
-
-Please add any other information that would be useful for the reviewer.
-
-**YOUR TEXT HERE**
+Please add any additional information that will be useful for the reviewer.
