@@ -10,7 +10,7 @@ Describe in as much detail as possible what the pull request is trying to achiev
 
 ## Checklist
 
-_Put an `x` in all that apply and explain why in any that don't
+_Put an `x` in all that apply and explain why in any that don't_
 
 - [ ] ❓ I have performed a self-review
 - [ ] 📝 The commit message is clear and descriptive
