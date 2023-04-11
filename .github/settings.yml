@@ -2,7 +2,7 @@
 _extends: .github:.github/global-settings.yml
 
 repository:
-  private: false
+  private: true
 
 branches:
   - name: main
