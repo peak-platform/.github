@@ -64,16 +64,16 @@ jobs:
           name: environment-mappings
           path: environment-mappings/mappings.json
 
-      - name: Create fallback directory
-        # if: ${{ steps.get-mappings.outcome != 'success' }}
-        run: mkdir environment-mappings
+      # - name: Create fallback directory
+      #   # if: ${{ steps.get-mappings.outcome != 'success' }}
+      #   run: mkdir environment-mappings
 
-      - name: Fallback to default mappings
-        if: ${{ steps.get-mappings.outcome != 'success' }}
-        uses: jsdaniell/create-json@1.2.2
-        with:
-          name: 'environment-mappings/mappings.json'
-          json: '{"latest": "main", "test": "main", "beta": "main", "prod": "main", "parvati": "main"}'
+      # - name: Fallback to default mappings
+      #   if: ${{ steps.get-mappings.outcome != 'success' }}
+      #   uses: jsdaniell/create-json@1.2.2
+      #   with:
+      #     name: 'environment-mappings/mappings.json'
+      #     json: '{"latest": "main", "test": "main", "beta": "main", "prod": "main", "parvati": "main"}'
 
       - name: Update mappings
         run: |
