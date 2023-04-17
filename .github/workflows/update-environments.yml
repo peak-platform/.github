@@ -70,7 +70,7 @@ jobs:
 
       - name: Fallback to default mappings
         if: ${{ steps.get-mappings.outcome != 'success' }}
-        uses: jsdaniell/create-json@1.1.2
+        uses: jsdaniell/create-json@1.2.2
         with:
           name: 'environment-mappings/mappings.json'
           json: '{"latest": "main", "test": "main", "beta": "main", "prod": "main", "parvati": "main"}'
