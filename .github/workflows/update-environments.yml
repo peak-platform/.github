@@ -56,13 +56,13 @@ jobs:
       #   run: |
       #     gh run download ${{ env.RUN_ID }}
 
-      # - name: Get environment mappings
-      #   id: get-mappings
-      #   uses: actions/download-artifact@v3
-      #   continue-on-error: true
-      #   with:
-      #     name: environment-mappings
-      #     path: environment-mappings/mappings.json
+      - name: Get environment mappings
+        id: get-mappings
+        uses: actions/download-artifact@v3
+        continue-on-error: true
+        with:
+          name: environment-mappings
+          path: environment-mappings/mappings.json
 
       - name: Create fallback directory
         # if: ${{ steps.get-mappings.outcome != 'success' }}
