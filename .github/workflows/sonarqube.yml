@@ -1,0 +1,83 @@
+name: SonarQube
+on:
+  workflow_call:
+
+jobs:
+  sonarqube:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Use Node.js LTS
+        uses: actions/setup-node@v2
+        with:
+          node-version: lts/*
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Get node modules cache
+        uses: actions/cache@v2
+        id: cache-node-modules
+        with:
+          path: |
+            node_modules
+            */*/node_modules
+          key: ${{ runner.os }}-lts-install_dependencies-${{ hashFiles('**/yarn.lock') }}-${{ hashFiles('prisma/schema.prisma') }}
+          restore-keys: |
+            ${{ runner.os }}-lts-install_dependencies-
+
+      - name: Install dependencies
+        if: steps.cache-node-modules.outputs.cache-hit != 'true'
+        run: yarn install --frozen-lockfile
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
+
+      - name: Get Linting Report
+        run: |
+          yarn lint -f json-relative -o eslint-report.json || true
+          if [[ -f ./eslint-report.json ]]; then
+            echo "ESLINT_ARGS=-Dsonar.eslint.reportPaths=./eslint-report.json" >> $GITHUB_ENV
+          else
+            echo "ESLINT_ARGS=" >> $GITHUB_ENV
+          fi
+
+      - name: Start database container
+        run: docker compose up db -d
+
+      - name: Collect Coverage
+        run: |
+          if yarn test --coverage --runInBand; then
+            echo "LCOV_ARGS=-Dsonar.javascript.lcov.reportPaths=./coverage/lcov.info" >> $GITHUB_ENV
+          else
+            echo "LCOV_ARGS=" >> $GITHUB_ENV
+          fi
+
+      - name: Get SonarQube Arguments
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "ARGS=-Dsonar.pullrequest.key=${{ github.event.number }} -Dsonar.pullrequest.branch=${{ github.event.pull_request.head.ref }} -Dsonar.pullrequest.base=${{ github.base_ref }}" >> $GITHUB_ENV
+          else
+            echo "ARGS=-Dsonar.branch.name=${GITHUB_REF##*/}" >> $GITHUB_ENV
+          fi
+
+      - name: SonarQube Scan
+        uses: sonarsource/sonarqube-scan-action@v1.0.0
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        with:
+          args: >
+            ${{ env.ARGS }}
+            ${{ env.LCOV_ARGS }}
+            ${{ env.ESLINT_ARGS }}
+
+      - name: SonarQube Quality Gate check
+        uses: sonarsource/sonarqube-quality-gate-action@master
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      - name: Stop database container
+        if: always()
+        run: docker compose down

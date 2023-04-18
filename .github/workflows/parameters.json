@@ -1,0 +1,32 @@
+{
+  "params": {
+    "basepath": "${{ values.basePath }}"
+  },
+  "stages": {
+    "latest": {
+      "clusterName": "latest-peak-k8s01-eks",
+      "hostedZoneId": "Z29NPW8CIKDRPI",
+      "rootDomainName": "dev.peak.ai"
+    },
+    "test": {
+      "clusterName": "latest-peak-k8s01-eks",
+      "hostedZoneId": "Z2Y3WJF4EPVKCF",
+      "rootDomainName": "test.peak.ai"
+    },
+    "beta": {
+      "clusterName": "prod-peak-k8s01-eks",
+      "hostedZoneId": "ZH1AAPZ39TZBF",
+      "rootDomainName": "beta.peak.ai"
+    },
+    "prod": {
+      "clusterName": "prod-peak-k8s01-eks",
+      "hostedZoneId": "Z2NOEAZ95K1JPZ",
+      "rootDomainName": "peak.ai"
+    },
+    "parvati": {
+      "clusterName": "parvati-peak-k8s01-eks",
+      "hostedZoneId": "Z07529731SF1I2PJ1LM1A",
+      "rootDomainName": "parvati.peak.ai"
+    }
+  }
+}
