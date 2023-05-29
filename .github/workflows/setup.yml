@@ -4,7 +4,7 @@ on:
 
 jobs:
   initialise_environments:
-    runs-on: ubuntu-latest
+    runs-on: basic-platform
     steps:
       - name: Trigger initial update environments
         uses: benc-uk/workflow-dispatch@v1
@@ -13,7 +13,7 @@ jobs:
           token: ${{ secrets.GIT_TOKEN }}
 
   setup_sonarqube:
-    runs-on: ubuntu-latest
+    runs-on: basic-platform
     steps:
       - name: SonarQube Create Project
         run: |
@@ -24,7 +24,7 @@ jobs:
           curl -s -S -X POST -u "${{ secrets.SONAR_TOKEN }}:" "${{ secrets.SONAR_HOST_URL }}/api/project_branches/rename" -d "name=main&project=${{ github.event.repository.name }}"
 
   create_ecr_repo:
-    runs-on: ubuntu-latest
+    runs-on: basic-platform
     env:
       REGION: eu-west-1
     steps:
