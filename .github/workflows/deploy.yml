@@ -9,7 +9,7 @@ on:
         default: latest
 
 # Block multiple deployments to the same stage at the same stage
-concurrency: ${{ github.event.inputs.stage }}
+# concurrency: ${{ github.event.inputs.stage }}
 
 jobs:
   deploy:
