@@ -7,6 +7,16 @@ on:
         required: true
         type: string
         default: latest
+      helmchartbranch:
+        description: Helm chart branch for peak-helm-charts repo
+        required: false
+        type: string
+        default: main
+      helmchartversion:
+        description: Helm chart version for peak-helm-charts/microservice-with-istio
+        required: false
+        type: string
+        default: 0.0.7
 
 # Block multiple deployments to the same stage at the same stage
 # concurrency: ${{ github.event.inputs.stage }}
@@ -144,12 +154,44 @@ jobs:
           ssm_parameter: "/${{ github.event.inputs.stage }}-platform-services-sg/newk8svpc"
           env_variable_name: "COMMON_SECURITY_GROUP"
 
+      - name: Connect to kubernetes cluster
+        run: |
+          maxRetries=5
+          retryInterval=2
+          export k8sConfigStatus="PENDING"
+          for (( i=1; i<=$maxRetries; i++ ))
+          do
+              echo "Updating kubeconfig... Attempt $i"
+              aws eks --region ${{ env.REGION }} update-kubeconfig --name ${{ env.CLUSTER_NAME }} --alias ${{ github.event.inputs.stage }}
+              if [ "$?" -eq 0 ]; then
+                echo "Update kubeconfig succeeded"
+                export k8sConfigStatus="SUCCESS"
+                break
+              fi
+              if [ $i -eq $maxRetries ]; then
+                echo "\n[ERROR] Max retries reached. Update-kubeconfig failed."
+                export k8sConfigStatus="FAILED"
+                break
+              fi
+              sleepTime=$((retryInterval ** i))
+              echo "\n[WARN] Failed to update kubeconfig. Retrying in $sleepTime seconds..."
+              sleep $sleepTime
+          done
+
       - name: Deploy helm chart
         run: |
-          aws ssm send-command \
-           --document-name kubectl-command \
-           --targets "Key=tag:Name,Values=kubectl-proxy" \
-           --parameters '{"Repo":["${{ github.event.repository.name }}"],"HelmChartBranch":["main"],"Command":["cd infrastructure/helm-charts/overrides && helm upgrade ${{ github.event.repository.name }} peak-helm-charts/microservice-with-istio --wait --atomic --version 0.0.7 --install -f ./default.yml -f ./${{ github.event.inputs.stage }}.yml --set \\\"global.securityGroupPolicy.securityGroupIds={${{ env.COMMON_SECURITY_GROUP }}}\\\" --set \\\"microservice.stacks.main.image.repository=088564592310.dkr.ecr.eu-west-1.amazonaws.com/${{ github.event.repository.name }}\\\" --set \\\"microservice.stacks.main.image.tag=${{ env.CURRENT_COMMIT_ID }}\\\" --set \\\"microservice.stacks.main.env[2].value=${{ env.KAFKA_CONFIG }}\\\" -n ${{ env.NAMESPACE }} --create-namespace && kubectl label namespace ${{ env.NAMESPACE }} istio-injection=enabled"],"Cluster":["${{ env.CLUSTER_NAME }}"],"GitRef":["${{ env.CURRENT_COMMIT_ID }}"]}'
+          cd infrastructure/helm-charts/overrides;
+          helm repo add peak-helm-charts "https://${{ secrets.GITHUB_TOKEN }}:${{ secrets.GITHUB_TOKEN }}@raw.githubusercontent.com/peak-platform/peak-helm-charts/${{ github.event.inputs.helmchartbranch }}";
+          helm repo update;
+          helm upgrade ${{ github.event.repository.name }} peak-helm-charts/microservice-with-istio \
+            --wait --atomic --version ${{ github.event.inputs.helmchartversion }}" --install \
+            -f ./default.yml -f ./${{ github.event.inputs.stage }}.yml \
+            --set "global.securityGroupPolicy.securityGroupIds={${{ env.COMMON_SECURITY_GROUP }}}" \
+            --set "microservice.stacks.main.image.repository=088564592310.dkr.ecr.eu-west-1.amazonaws.com/${{ github.event.repository.name }}" \
+            --set "microservice.stacks.main.image.tag=${{ env.CURRENT_COMMIT_ID }}" \
+            --set "microservice.stacks.main.env[2].value=${{ env.KAFKA_CONFIG }}" \
+            -n ${{ env.NAMESPACE }} --create-namespace; 
+          kubectl label namespace ${{ env.NAMESPACE }} istio-injection=enabled;
 
   post_deploy:
     name: Post deploy
