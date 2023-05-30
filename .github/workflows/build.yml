@@ -9,7 +9,7 @@ on:
         default: main
 
 # Block multiple builds from the same commit running at the same time
-concurrency: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.ref || github.ref }}
+# concurrency: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.ref || github.ref }}
 
 jobs:
   test:
