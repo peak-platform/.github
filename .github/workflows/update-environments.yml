@@ -1,0 +1,71 @@
+name: Update Environments
+on:
+  workflow_call:
+    inputs:
+      stage:
+        description: Stage to update (default latest)
+        required: true
+        type: string
+        default: latest
+      ref:
+        description: Build ref to map to stage (default main)
+        required: true
+        type: string
+        default: main
+
+jobs:
+  update-environments:
+    name: Update environment mappings
+    runs-on: basic-platform
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Authenticate with Github CLI
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" > auth_token.txt
+          gh auth login --with-token < auth_token.txt
+
+      - name: Get workflow ID
+        id: get-workflow-id
+        continue-on-error: true
+        run: |
+          echo "WORKFLOW_ID=`gh api -X GET '/repos/peak-platform/${{ github.event.repository.name }}/actions/workflows' | jq '.workflows | .[] | select(.name=="Update Environments") | .id'`" >> $GITHUB_ENV
+
+      - name: Get run ID
+        id: get-run-id
+        if: ${{ steps.get-workflow-id.outcome == 'success' }}
+        continue-on-error: true
+        run: |
+          echo "RUN_ID=`gh api -X GET '/repos/peak-platform/${{ github.event.repository.name }}/actions/workflows/${{ env.WORKFLOW_ID }}/runs' | jq '[ .workflow_runs | .[] | select(.status=="completed" and .conclusion=="success") ] | .[0].id'`" >> $GITHUB_ENV
+
+      - name: Get environment mappings
+        id: get-mappings
+        if: ${{ steps.get-run-id.outcome == 'success' }}
+        continue-on-error: true
+        run: |
+          gh run download ${{ env.RUN_ID }}
+
+      - name: Create fallback directory
+        if: ${{ steps.get-mappings.outcome != 'success' }}
+        run: mkdir environment-mappings
+
+      - name: Fallback to default mappings
+        if: ${{ steps.get-mappings.outcome != 'success' }}
+        uses: jsdaniell/create-json@v1.2.2
+        with:
+          name: "environment-mappings/mappings.json"
+          json: '{"latest": "main", "test": "main", "beta": "main", "prod": "main", "parvati": "main"}'
+
+      - name: Update mappings
+        run: |
+          jq -r '.${{ github.event.inputs.stage }} |= "${{ github.event.inputs.ref }}"' environment-mappings/mappings.json > tmp.json
+          mv tmp.json environment-mappings/mappings.json
+          cat environment-mappings/mappings.json
+
+      - name: Output mappings
+        uses: actions/upload-artifact@v3
+        with:
+          name: environment-mappings
+          path: environment-mappings/mappings.json
+          retention-days: 90
