@@ -14,7 +14,7 @@ on:
 jobs:
   deploy:
     name: Deploy
-    runs-on: ubuntu-latest
+    runs-on: deploy-platform
     env:
       NAMESPACE: ${{ github.event.repository.name }}-${{ github.event.inputs.stage }}
     steps:
@@ -153,7 +153,7 @@ jobs:
 
   post_deploy:
     name: Post deploy
-    runs-on: ubuntu-latest
+    runs-on: deploy-platform
     needs: deploy
     steps:
       - name: Post deployment tests

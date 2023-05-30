@@ -13,7 +13,7 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: build-platform
     env:
       NODE_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
     steps:
@@ -59,7 +59,7 @@ jobs:
         run: docker compose down
 
   build:
-    runs-on: ubuntu-latest
+    runs-on: build-platform
     env:
       REGION: eu-west-1
       NODE_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
@@ -164,7 +164,7 @@ jobs:
 
   # Checks if the built git ref matches environment mappings and triggers deploy pipeline as needed
   trigger_deployments:
-    runs-on: ubuntu-latest
+    runs-on: build-platform
     needs: build
     steps:
       - name: Checkout
