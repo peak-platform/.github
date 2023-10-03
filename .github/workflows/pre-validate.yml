@@ -1,0 +1,139 @@
+name: Prevalidate
+
+on:
+  workflow_call:
+    secrets:
+      token:
+        required: true
+    inputs:
+        validate_changelog:
+            type: boolean
+            description: Whether to validate changelogs
+            required: false
+            default: false
+        triage:
+            type: boolean
+            description: Whether to perform automated triaging
+            required: false
+            default: false
+
+concurrency:
+  group: pre-validate-${{ github.repository }}-${{ github.event.pull_request.head.ref }}-1
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: "ubuntu-latest"
+    # Ignore dependabot branches
+    if: ! startsWith(github.event.pull_request.head.ref, 'dependabot/')
+
+    steps:
+      - name: Check out the repository
+        id: checkout
+        uses: actions/checkout@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.token }}
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: validate Branch Name
+        id: validate-branch-name
+        uses: deepakputhraya/action-branch-name@e0f8db53a8e289f1ae6f6c3e8dc70a3d366fd876
+        with:
+          regex: '([a-z-0-9]{3,})\/([a-z0-9._-])+' # Regex the branch should match. 
+          # This regex enforces grouping with a Jira ticket number and a lowercase subject
+          # so something like feat/pi-123/my-branch-for-my-cause would be a valid example
+          allowed_prefixes: "feat,fix,docs,style,refactor,perf,test,build,ci,chore,revert,deps,dependabot" # All branches should start with the given prefix
+          ignore: main # Ignore exactly matching branch names from convention
+          min_length: 4 # Min length of the branch name
+          max_length: 63 # Max length of the branch name
+
+      - name: Verify Changelog Content
+        id: verify-changed-files
+        if: ${{ github.event.pull_request.base.ref == 'main' }} && ${{ inputs.validate_changelog == true }}
+        uses: tj-actions/changed-files@v37
+        with:
+          since_last_remote_commit: false
+          files: |
+            Changelog.md
+
+      - name: Verify Changelog was updated
+        id: verify-changelog-updated
+        if: ${{ github.event.pull_request.base.ref == 'main' }} && ${{ inputs.validate_changelog == true }}
+        run: |
+          if [ "${{ steps.verify-changed-files.outputs.any_changed }}" == "true" ]; then
+            echo "The Changelog.md file was updated"
+          else
+            echo "The Changelog.md file was not updated"
+            exit 1
+          fi
+
+      - name: Validate PR title
+        if: startsWith(github.event.pull_request.head.ref, 'dependabot/')
+        id: validate-title
+        uses: amannn/action-semantic-pull-request@c3cd5d1ea3580753008872425915e343e351ab54
+        env:
+          GITHUB_TOKEN: ${{ secrets.token }}
+        with:
+          # Configure which types are allowed (newline delimited).
+          # Default: https://github.com/commitizen/conventional-commit-types
+          types: |
+            feat
+            fix
+            docs
+            style
+            refactor
+            perf
+            test
+            build
+            ci
+            chore
+            revert
+            deps
+            dependabot
+          # If the PR only contains a single commit, the action will validate that
+          # it matches the configured pattern.
+          validateSingleCommit: true
+          # For work-in-progress PRs you can typically use draft pull requests
+          # from GitHub. However, private repositories on the free plan don't have
+          # this option and therefore this action allows you to opt in to using the
+          # special "[WIP]" prefix to indicate this state. This will avoid the
+          # validation of the PR title and the pull request checks remain pending.
+          # Note that a second check will be reported if this is enabled.
+          wip: true
+          # Configure additional validation for the subject based on a regex.
+          # This example ensures the subject doesn't start with an uppercase character.
+          # something like feat: PI-150
+          subjectPattern: ^([a-z-A-Z]{2,3}[-0-9]{1,}[\s\|]*[\s]?)(.+)$
+          # If `subjectPattern` is configured, you can use this property to override
+          # the default error message that is shown when the pattern doesn't match.
+          # The variables `subject` and `title` can be used within the message.
+          subjectPatternError: |
+            The subject "{subject}" found in the pull request title "{title}"
+            didn't match the configured pattern.
+            The regex pattern is "^([a-z-A-Z]{2,3}[-0-9]{1,}[\s\|]*[\s]?)(.+)$" and,
+            enforces use of a Jira ticket number followed by a (space/|) and subject in lowercase.
+            For example, a valid subject would be "LA-1234 | fixes something" or  "LA-1234 fixes something"
+
+  triage:
+    runs-on: "ubuntu-latest"
+    # Ignore dependabot branches
+    if: ! startsWith(github.event.pull_request.head.ref, 'dependabot/') && inputs.triage == 'true'
+
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Label PR
+        id: label-pr
+        uses: TimonVS/pr-labeler-action@v4.1.1
+        with:
+          repo-token: ${{ secrets.token }}
+          configuration-path: .github/pr-labels.yml
+
+      - name: Assign PR
+        id: assign-pr
+        uses: samspills/assign-pr-to-author@v1.0.2
+        with:
+          repo-token: "${{ secrets.token }}"
