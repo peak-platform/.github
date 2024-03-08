@@ -24,18 +24,12 @@ Put an `x` in all that apply and explain why in any that don't
 - [ ] 📄 The documentation is up-to-date
 - [ ] 🔐 The security considerations section in the PR description is complete - **Please do not remove this**
 
-## Dependencies
+## Customer Impact
+
+**Can this change have a customer impact?** 
 
 <!---
-Add links to any pull requests or documentation related to this pull request.
--->
-
-- [YOUR LINK HERE](https://example.com/)
-
-**Does this PR introduce a breaking change?** 
-
-<!---
-(What changes might users need to make in their application due to this PR?)
+(Could this impact a customer at all?)
 -->
 
 - [ ] Yes
@@ -43,6 +37,19 @@ Add links to any pull requests or documentation related to this pull request.
 
 <!---
 **If you answered yes, then please explain below.**
+-->
+
+<!---
+Examples:
+
+- Customer will have to change XYZ API call
+  - We've considered backwards compatible changes but were unable to accomodate (link to conversation)
+  - Communication has been planned
+- The button has moved
+  - The average user shouldn't have a problem finding the new button
+- The change may cause downtime
+  - We have scheduled a maintenance window for deployment
+  - Maintenance window has been communicated with potentially impacted customers
 -->
 
 ## Security Considerations
