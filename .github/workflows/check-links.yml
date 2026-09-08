@@ -1,0 +1,59 @@
+name: Check-Links
+
+on:
+  workflow_call:
+    secrets:
+      token:
+        required: true
+
+concurrency:
+  group: link-checker-${{ github.repository }}-${{ github.head_ref }}-1
+  cancel-in-progress: true
+
+env:
+  FAIL_ON_ERROR: ${{ github.event.schedule == '00 20 1-7 * SUN' || false }}
+
+jobs:
+  linkChecker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: show
+        id: show-env
+        if: ${{ always() }}
+        run: |
+          echo "FAIL_ON_ERROR: ${{ env.FAIL_ON_ERROR }}"
+          echo "BRANCH: ${{ github.ref_name }}"
+          echo "SCHEDULE: ${{ github.event.schedule }}"
+          echo "SHA: ${{ github.sha }}"
+
+      - name: Restore lychee cache
+        id: restore-lychee-cache
+        uses: actions/cache@v3
+        with:
+          path: .lycheecache
+          key: cache-lychee-${{ github.sha }}
+          restore-keys: cache-lychee-
+
+      - name: checkout
+        id: checkout
+        if: steps.restore-lychee-cache.outputs.cache-hit != 'true'
+        uses: actions/checkout@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.token }}
+
+      - name: Link Checker Fail on Error - ${{ env.FAIL_ON_ERROR }}
+        id: lychee
+        uses: lycheeverse/lychee-action@v1.8.0
+        with:
+          fail: ${{ env.FAIL_ON_ERROR }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.token }}
+
+      - name: Create Issue From File
+        id: create-issue
+        if: env.lychee_exit_code != 0 && github.ref_name == 'main'
+        uses: peter-evans/create-issue-from-file@v4
+        with:
+          title: Link Checker Report
+          content-filepath: ./lychee/out.md
+          labels: report, automated issue
